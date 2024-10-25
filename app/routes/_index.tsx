@@ -1,9 +1,7 @@
-import { google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { CoreMessage, streamText } from "ai";
+import type { MetaFunction } from "@remix-run/node";
 import { useChat } from "ai/react";
 import React from "react";
+import { Provider, providers } from "./api";
 
 export const meta: MetaFunction = () => {
   return [
@@ -12,37 +10,11 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-const providers = ["gemini-1.5-flash", "gpt-3.5-turbo"] as const;
-type Provider = (typeof providers)[number];
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const {
-    messages,
-    provider,
-  }: { messages: CoreMessage[]; provider: Provider } = await request.json();
-
-  if (provider === "gemini-1.5-flash") {
-    const result = await streamText({
-      model: google("gemini-1.5-flash"),
-      system: "You are a helpful assistant.",
-      messages,
-    });
-    return result.toDataStreamResponse();
-  } else if (provider === "gpt-3.5-turbo") {
-    const result = await streamText({
-      model: openai("gpt-3.5-turbo"),
-      system: "You are a helpful assistant.",
-      messages,
-    });
-    return result.toDataStreamResponse();
-  }
-};
-
 export default function Index() {
   const [provider, setProvider] = React.useState<Provider>("gemini-1.5-flash");
   const { messages, input, handleSubmit, handleInputChange, isLoading } =
     useChat({
-      api: "?index&_data",
+      api: "/api",
       body: { provider },
       onResponse: (response) => {
         console.log(response);
